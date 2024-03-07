@@ -33,32 +33,33 @@
         }
         var totalUploaded = 0;
 
-        fetch("http://localhost:8080/upload", {
-            method: "POST",
-            body: formData,
-            headers: {
-                "Access-Control-Allow-Origin": "*"
-            },
-            // This is important to send the file in chunks and track progress
-            // This code snippet is responsible for showing the progress
-            onUploadProgress: function(progressEvent) {
-                if (progressEvent.lengthComputable) {
-                    var percentUploaded = Math.round((progressEvent.loaded / totalSize) * 100);
-                    progressBar.value = percentUploaded;
-                    progressText.innerText = "Uploading... " + percentUploaded + "%";
-                }
+        // Create a new XMLHttpRequest object
+        var xhr = new XMLHttpRequest();
+
+        // Add event listener for progress
+        xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+                var percentUploaded = Math.round((event.loaded / totalSize) * 100);
+                progressBar.value = percentUploaded;
+                progressText.innerText = "Uploading... " + percentUploaded + "%";
             }
-        })
-            .then(response => {
-                if (response.ok) {
-                    progressText.innerText = "File(s) uploaded successfully.";
-                } else {
-                    progressText.innerText = "Error uploading file.";
-                }
-            })
-            .catch(error => {
-                progressText.innerText = "Error uploading file: " + error.message;
-            });
+        };
+
+        // Send the FormData object as a POST request to the server
+        xhr.open("POST", "http://localhost:8080/upload");
+        xhr.send(formData);
+
+        xhr.onload = function() {
+            if (xhr.status == 200) {
+                progressText.innerText = "File(s) uploaded successfully.";
+            } else {
+                progressText.innerText = "Error uploading file.";
+            }
+        };
+
+        xhr.onerror = function() {
+            progressText.innerText = "Error uploading file.";
+        };
     });
 </script>
 </body>
