@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+</head>
+<body>
+<h2>Upload a File</h2>
+<form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="files" id="fileInput" multiple>
+    <button type="submit">Upload File</button>
+</form>
+<div id="progressText"></div>
+<progress id="progressBar" value="0" max="100"></progress>
+
+<script>
+    document.getElementById("uploadForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        var fileInput = document.getElementById("fileInput");
+        var formData = new FormData();
+
+        for (var i = 0; i < fileInput.files.length; i++) {
+            formData.append("files", fileInput.files[i]);
+        }
+
+        var progressBar = document.getElementById("progressBar");
+        var progressText = document.getElementById("progressText");
+        var totalSize = 0;
+        for (var i = 0; i < fileInput.files.length; i++) {
+            totalSize += fileInput.files[i].size;
+        }
+        var totalUploaded = 0;
+
+        fetch("http://localhost:8080/upload", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Access-Control-Allow-Origin": "*"
+            },
+            // This is important to send the file in chunks and track progress
+            // This code snippet is responsible for showing the progress
+            onUploadProgress: function(progressEvent) {
+                if (progressEvent.lengthComputable) {
+                    var percentUploaded = Math.round((progressEvent.loaded / totalSize) * 100);
+                    progressBar.value = percentUploaded;
+                    progressText.innerText = "Uploading... " + percentUploaded + "%";
+                }
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    progressText.innerText = "File(s) uploaded successfully.";
+                } else {
+                    progressText.innerText = "Error uploading file.";
+                }
+            })
+            .catch(error => {
+                progressText.innerText = "Error uploading file: " + error.message;
+            });
+    });
+</script>
+</body>
+</html>
